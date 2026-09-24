@@ -23,7 +23,7 @@ final class AdaptiveLensManager {
         virtualDevice = virtualDeviceFor(position: .back)
     }
     private func discover(position: AVCaptureDevice.Position) -> [Lens] {
-        let types: [AVCaptureDevice.DeviceType] = [.builtInTripleCamera,.builtInDualWideCamera,.builtInDualCamera,.builtInUltraWideCamera,.builtInWideAngleCamera,.builtInTelephotoCamera,.builtInTrueDepthCamera,.builtInLiDARDepthCamera]
+        let types: [AVCaptureDevice.DeviceType] = [.builtInTripleCamera,.builtInDualWideCamera,.builtInDualCamera,.builtInUltraWideCamera,.builtInWideAngleCamera,.builtInTelephotoCamera,.builtInTrueDepthCamera]
         let session = AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: position)
         var lenses: [Lens] = []
         for d in session.devices {
@@ -80,8 +80,9 @@ final class AdaptiveLensManager {
         return list.min(by: { abs($0.nominalZoom - zoom) < abs($1.nominalZoom - zoom) })
     }
     func switchFactorsBack() -> [CGFloat] {
-        if let vd = virtualDevice, !(vd.virtualDeviceSwitchOverVideoZoomFactors is NSNull) {
-            if let arr = vd.virtualDeviceSwitchOverVideoZoomFactors as? [NSNumber] { return arr.map{ CGFloat(truncating:$0) } }
+        if let vd = virtualDevice {
+            let arr = vd.virtualDeviceSwitchOverVideoZoomFactors
+            if !arr.isEmpty { return arr.map{ CGFloat(truncating: $0) } }
         }
         return lensesBack.map{ $0.nominalZoom }.sorted()
     }
