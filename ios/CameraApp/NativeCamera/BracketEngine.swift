@@ -29,7 +29,7 @@ final class BracketEngine {
             let s = AVCaptureManualExposureBracketedStillImageSettings.manualExposureSettings(exposureDuration: baseDuration, iso: hwISO) as AVCaptureBracketedStillImageSettings
             settings.append(s)
         }
-        guard let bracket = try? AVCapturePhotoBracketSettings(rawFormat: 0, processedFormat: [AVVideoCodecKey: AVVideoCodecType.hevc], bracketedSettings: settings) else { return nil }
+        guard let bracket = try? AVCapturePhotoBracketSettings(rawFormat: OSType(0), processedFormat: [AVVideoCodecKey: AVVideoCodecType.hevc], bracketedSettings: settings) else { return nil }
         bracket.isHighResolutionPhotoEnabled = true
         return bracket
     }

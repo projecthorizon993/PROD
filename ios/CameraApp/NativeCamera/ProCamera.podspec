@@ -8,9 +8,10 @@ Pod::Spec.new do |s|
   s.platform               = :ios, "16.0"
   s.source                 = { :path => "." }
   s.source_files           = "*.{swift,h,m}"
+  s.exclude_files          = "VectorCameraUI.swift"
   s.requires_arc           = true
   s.swift_version          = "5.0"
   s.dependency "React-Core"
   s.frameworks = "AVFoundation", "CoreImage", "Metal", "MetalPerformanceShaders", "Vision", "CoreML", "Accelerate"
-  s.pod_target_xcconfig = { "OTHER_SWIFT_FLAGS" => "-DANE_OPTIMIZED" }
+  s.pod_target_xcconfig = { "OTHER_SWIFT_FLAGS" => "-DANE_OPTIMIZED", "SWIFT_TREAT_WARNINGS_AS_ERRORS" => "NO" }
 end

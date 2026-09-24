@@ -27,7 +27,7 @@ final class AdaptiveLensManager {
         let session = AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: position)
         var lenses: [Lens] = []
         for d in session.devices {
-            if d.deviceType == .builtInLiDARDepthCamera { continue }
+            if #available(iOS 15.0, *), d.deviceType == .builtInLiDARDepthCamera { continue }
             if d.deviceType == .builtInTripleCamera || d.deviceType == .builtInDualWideCamera || d.deviceType == .builtInDualCamera { continue }
             let id: String; let label: String; let nominal: CGFloat
             switch d.deviceType {
@@ -42,15 +42,18 @@ final class AdaptiveLensManager {
         }
         if let virt = virtualDeviceFor(position: position) {
             var virtLenses: [Lens] = []
-            if #available(iOS 13.0, *), let constituents = virt.constituentDevices as? [AVCaptureDevice] {
-                for (idx, pd) in constituents.enumerated() {
-                    let id: String
-                    if pd.deviceType == .builtInUltraWideCamera { id = "ultraWide" }
-                    else if pd.deviceType == .builtInTelephotoCamera { id = "tele" }
-                    else { id = idx==0 && constituents.count==2 ? "wide" : "wide" }
-                    let nominal: CGFloat = id=="ultraWide" ? 0.5 : id=="tele" ? 5 : 1.0
-                    let label = id=="ultraWide" ? "0.5×" : id=="tele" ? "\(Int(nominal))×" : "1×"
-                    virtLenses.append(Lens(id:id, label:label, deviceType: pd.deviceType, position: position, nominalZoom: nominal, minZoom: nominal*0.9, maxZoom: nominal*3, focalMM: nil, isVirtual: true))
+            if #available(iOS 13.0, *) {
+                let constituents: [AVCaptureDevice] = virt.constituentDevices
+                if !constituents.isEmpty {
+                    for (idx, pd) in constituents.enumerated() {
+                        let id: String
+                        if pd.deviceType == .builtInUltraWideCamera { id = "ultraWide" }
+                        else if pd.deviceType == .builtInTelephotoCamera { id = "tele" }
+                        else { id = idx==0 && constituents.count==2 ? "wide" : "wide" }
+                        let nominal: CGFloat = id=="ultraWide" ? 0.5 : id=="tele" ? 5 : 1.0
+                        let label = id=="ultraWide" ? "0.5×" : id=="tele" ? "\(Int(nominal))×" : "1×"
+                        virtLenses.append(Lens(id:id, label:label, deviceType: pd.deviceType, position: position, nominalZoom: nominal, minZoom: nominal*0.9, maxZoom: nominal*3, focalMM: nil, isVirtual: true))
+                    }
                 }
             }
             if !virtLenses.isEmpty { return virtLenses.sorted{ $0.nominalZoom < $1.nominalZoom } }
