@@ -61,7 +61,7 @@ jobs:
         run: npm ci --prefer-offline --no-audit --no-fund
       - name: Install pods
         working-directory: ios
-        run: bundle exec pod install --no-repo-update
+        run: pod install --no-repo-update
       - name: Build unsigned app
         run: |
           set -o pipefail
