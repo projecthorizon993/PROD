@@ -54,6 +54,33 @@ jobs:
           name: ios-unsigned-app
           path: build/unsigned/
           if-no-files-found: warn
+      - name: Create unsigned IPA
+        if: success()
+        run: |
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "CameraApp.app" -type d | head -n 1)
+          if [ -n "$APP" ] && [ -d "$APP" ]; then
+            echo "Found app at $APP"
+            mkdir -p build/ipa-unsigned/Payload
+            cp -R "$APP" build/ipa-unsigned/Payload/
+            # Remove extended attributes that break codesign on unsigned
+            xattr -cr build/ipa-unsigned/Payload/CameraApp.app 2>/dev/null || true
+            (cd build/ipa-unsigned && zip -r ../CameraApp-unsigned.ipa Payload 2>&1 | tail -n 20)
+            ls -lh build/*.ipa build/ipa-unsigned/*.ipa 2>/dev/null | head -n 20
+            # Also try xcodebuild archive as fallback unsigned archive
+            echo "Attempting archive (unsigned) for IPA fallback..."
+            xcodebuild -workspace ios/CameraApp.xcworkspace -scheme CameraApp -configuration Release -sdk iphoneos -archivePath build/CameraApp.xcarchive archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee /tmp/archive-unsigned.log | tail -n 50; echo "archive exit ${PIPESTATUS[0]}" || true
+            if [ -d "build/CameraApp.xcarchive" ]; then
+              ls -R build/CameraApp.xcarchive 2>/dev/null | head -n 40
+            fi
+          else
+            echo "No CameraApp.app found"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-ipa
+          path: build/CameraApp-unsigned.ipa
+          if-no-files-found: warn
 
   ios-release:
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
