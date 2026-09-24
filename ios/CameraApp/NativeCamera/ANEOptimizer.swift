@@ -30,7 +30,7 @@ enum ANEOptimizer {
             let start = CFAbsoluteTimeGetCurrent()
             let w = 512, h = 512
             var pb: CVPixelBuffer?
-            CVPixelBufferCreate(kCFAllocatorDefault, w, h, kCVPixelFormatType_32BGRA, [kCVPixelBufferMetalCompatibilityKey: true, kCVPixelBufferIOSurfacePropertiesKey: [:] as NSDictionary] as [String:Any], &pb)
+            CVPixelBufferCreate(kCFAllocatorDefault, w, h, kCVPixelFormatType_32BGRA, [kCVPixelBufferMetalCompatibilityKey as String: true, kCVPixelBufferIOSurfacePropertiesKey as String: [:]] as CFDictionary, &pb)
             guard let pix = pb else { return }
             if let vn = try? VNCoreMLModel(for: model) {
                 let req = VNCoreMLRequest(model: vn)

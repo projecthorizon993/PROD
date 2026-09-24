@@ -33,7 +33,7 @@ final class LowLightEnhancer {
     private var lastProcess = CFAbsoluteTimeGetCurrent()
     private let minInterval: CFTimeInterval = 1.0 / 15.0
     private let lumaFilter = CIFilter(name: "CIAreaAverage")!
-    private let luminanceCrop = CIFilter(name: "CIAreaAverage", withInputParameters: [:])
+    private let luminanceCrop = CIFilter(name: "CIAreaAverage")
     private let gaussianBlur = CIFilter(name: "CIGaussianBlur")!
     private var snrLut: [Float] = (0..<256).map { v in let x = Float(v)/255.0; return 1.0 / (1.0 + exp(-12*(x-0.35))) }
     private var hviKernel: CIColorKernel?
@@ -119,7 +119,8 @@ final class LowLightEnhancer {
             visionQueue.async {
                 ANEOptimizer.sharedToken.withToken {
                     let req = VNCoreMLRequest(model: vModel) { req, _ in
-                        if let obs = req.results?.first as? VNPixelBufferObservation, let buf = obs.pixelBuffer {
+                        if let obs = req.results?.first as? VNPixelBufferObservation {
+                            let buf = obs.pixelBuffer
                             let out = CIImage(cvPixelBuffer: buf)
                             completion(self.loeGuard(input: image, enhanced: out))
                             return
@@ -231,8 +232,8 @@ final class LowLightEnhancer {
             denoise = nr.outputImage ?? image
         } else { denoise = image }
         let snrWeight = min(0.92, max(0.15, estimateLuma(of: illumination) * 0.9 + 0.2))
-        let aImg = image.applyingFilter("CIColorMatrix", parameters: ["inputAVector": CIVector(x: 0,y: 0,z: 0,w: snrWeight)])
-        let bImg = denoise.applyingFilter("CIColorMatrix", parameters: ["inputAVector": CIVector(x: 0,y: 0,z: 0,w: 1 - snrWeight)])
+        let aImg = image.applyingFilter("CIColorMatrix", parameters: ["inputAVector": CIVector(x: 0,y: 0,z: 0,w: CGFloat(snrWeight))])
+        let bImg = denoise.applyingFilter("CIColorMatrix", parameters: ["inputAVector": CIVector(x: 0,y: 0,z: 0,w: CGFloat(1 - snrWeight))])
         return aImg.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: bImg])
     }
 

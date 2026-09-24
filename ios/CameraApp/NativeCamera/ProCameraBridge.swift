@@ -159,11 +159,11 @@ class ProCameraModule: NSObject, RCTBridgeModule {
     }
     @objc func bakeLUT(_ name: NSString, size: NSNumber, resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
         let url = managerInstance().colorGradingEngine?.saveBakedLUTToDocuments(name: name as String, size: size.intValue)
-        resolve(["url": url?.absoluteString ?? NSNull(), "saved": url != nil])
+        resolve(["url": (url?.absoluteString as Any? ?? NSNull()), "saved": url != nil])
     }
     @objc func getLUTInfo(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
         let eng = managerInstance().colorGradingEngine
-        resolve(["name": eng?.currentLUTName ?? NSNull(), "intensity": eng?.params.lutIntensity ?? 1, "enabled": eng?.isEnabled ?? false])
+        resolve(["name": (eng?.currentLUTName as Any? ?? NSNull()), "intensity": eng?.params.lutIntensity ?? 1, "enabled": eng?.isEnabled ?? false])
     }
 
     @objc func setFilter(_ name: NSString, resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
@@ -213,7 +213,7 @@ class ProCameraModule: NSObject, RCTBridgeModule {
             if ok { url = alt }
         }
         if !ok { ok = m.colorGradingEngine?.loadLUT(named: (path as String).replacingOccurrences(of: ".cube", with: "")) ?? false }
-        resolve(["loaded": ok, "name": m.colorGradingEngine?.currentLUTName ?? NSNull()])
+        resolve(["loaded": ok, "name": (m.colorGradingEngine?.currentLUTName as Any? ?? NSNull())])
     }
 }
 
@@ -338,12 +338,12 @@ private class BracketPhotoDelegate: NSObject, AVCapturePhotoCaptureDelegate {
         } else { doZoomSharpen(img) }
     }
     private func doZoomSharpen(_ img: UIImage) {
-        guard let zs = manager.zoomSharpnessEngine, manager.zoomFactor > 1.05, let ci = CIImage(image: img) else { finalize(img); return }
+        guard let zs = manager.zoomSharpnessEngine, manager.zoomFactor > 1.05, let ci = CIImage(image: img) else { self.finalize(img); return }
         zs.enhanceStill(image: ci, zoomFactor: manager.zoomFactor) { outCI in
             let ctx = CIContext()
             if let cg = ctx.createCGImage(outCI, from: outCI.extent) {
-                finalize(UIImage(cgImage: cg, scale: img.scale, orientation: img.imageOrientation))
-            } else { finalize(img) }
+                self.finalize(UIImage(cgImage: cg, scale: img.scale, orientation: img.imageOrientation))
+            } else { self.finalize(img) }
         }
     }
     private func finalize(_ finalImage: UIImage) {

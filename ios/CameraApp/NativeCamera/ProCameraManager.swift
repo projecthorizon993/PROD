@@ -114,7 +114,7 @@ final class ProCameraManager: NSObject, ObservableObject {
                 self.session.addOutput(self.photoOutput)
                 self.photoOutput.isHighResolutionCaptureEnabled = true
                 self.photoOutput.maxPhotoQualityPrioritization = .quality
-                if #available(iOS 15.0, *) {
+                if #available(iOS 17.0, *) {
                     self.photoOutput.isResponsiveCaptureEnabled = true
                 }
             }

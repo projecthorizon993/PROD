@@ -48,10 +48,11 @@ final class ZoomSharpnessEngine {
             srQueue.async {
                 ANEOptimizer.sharedToken.withToken {
                     let req = VNCoreMLRequest(model: vModel) { req, _ in
-                        guard let obs = req.results?.first as? VNPixelBufferObservation, let buf = obs.pixelBuffer else {
+                        guard let obs = req.results?.first as? VNPixelBufferObservation else {
                             let cfg = self.sharpnessConfig(for: zoomFactor)
                             completion(self.applyStaticSharpen(image: image, cfg: cfg)); return
                         }
+                        let buf = obs.pixelBuffer
                         var out = CIImage(cvPixelBuffer: buf)
                         let need = zoomFactor / 2.0
                         if need > 1.05 { out = out.transformed(by: CGAffineTransform(scaleX: need, y: need)) }

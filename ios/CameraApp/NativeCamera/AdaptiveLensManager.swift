@@ -1,7 +1,7 @@
 import AVFoundation
 
 final class AdaptiveLensManager {
-    struct Lens: Codable {
+    struct Lens {
         var id: String
         var label: String
         var deviceType: AVCaptureDevice.DeviceType
