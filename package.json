@@ -6,7 +6,8 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "postinstall": "node scripts/patch-rn-camera-kit.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^3.1.1",
