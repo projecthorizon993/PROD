@@ -1,4 +1,4 @@
-package com.CameraApp
+package com.camerapp
 
 import android.app.Application
 import com.facebook.react.PackageList

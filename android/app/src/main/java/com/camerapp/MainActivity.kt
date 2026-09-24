@@ -1,4 +1,4 @@
-package com.CameraApp
+package com.camerapp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
