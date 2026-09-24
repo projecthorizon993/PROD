@@ -1,0 +1,47 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserstate
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+android/gradle/wrapper/
+android/app/release/
+android/*.keystore
+android/*.jks
+local.properties
+
+# Metro
+.metro-health-check*
+
+# Env
+.env
+.env.local
+.xcode.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Bundle
+*.jsbundle
+Carthage/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
