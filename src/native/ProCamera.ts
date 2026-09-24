@@ -44,6 +44,10 @@ export function getLensInfo(): Promise<{activeLens:string,factors:number[],posit
 export function setBracketMode(enabled:boolean, count:number=5, iso:number=6400): Promise<any> { return isAvailable ? ProCameraModule.setBracketMode(enabled, count, iso) : Promise.resolve({}); }
 export function getBracketInfo(): Promise<{enabled:boolean,count:number,targetISO:number,effectiveISO:number,snrGainDB:number}> { return isAvailable ? ProCameraModule.getBracketInfo() : Promise.resolve({enabled:false,count:5,targetISO:6400,effectiveISO:6400,snrGainDB:0}); }
 export function loadLUT(path: string): Promise<{loaded:boolean}> { return isAvailable ? ProCameraModule.loadLUT(path) : Promise.resolve({loaded:false}); }
+export function logMessage(msg: string): Promise<any> { return isAvailable && (ProCameraModule as any).logMessage ? (ProCameraModule as any).logMessage(msg) : Promise.resolve({}); }
+export function getLogs(): Promise<string> { return isAvailable && (ProCameraModule as any).getLogs ? (ProCameraModule as any).getLogs() : Promise.resolve(''); }
+export function clearLogs(): Promise<any> { return isAvailable && (ProCameraModule as any).clearLogs ? (ProCameraModule as any).clearLogs() : Promise.resolve({}); }
+export function getLogFilePath(): Promise<string> { return isAvailable && (ProCameraModule as any).getLogFilePath ? (ProCameraModule as any).getLogFilePath() : Promise.resolve(''); }
 
 export const Filters = ['None','Vivid','Vivid Warm','Mono','Noir','Silver','Chrome','Fade','Instant','Process','Transfer','Tonal','Cinematic','Teal & Orange','Night Boost'] as const;
 export const LowLightStrategies = ['auto','aneRetinexformer','aneZeroDCE','retinexFallback','hviFallback'] as const;

@@ -215,6 +215,22 @@ class ProCameraModule: NSObject, RCTBridgeModule {
         if !ok { ok = m.colorGradingEngine?.loadLUT(named: (path as String).replacingOccurrences(of: ".cube", with: "")) ?? false }
         resolve(["loaded": ok, "name": (m.colorGradingEngine?.currentLUTName as Any? ?? NSNull())])
     }
+
+    @objc func logMessage(_ message: NSString, resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+        AppLogger.info(message as String, category: "Bridge")
+        resolve([:])
+    }
+    @objc func getLogs(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+        let txt = FileLogger.shared.read()
+        resolve(txt)
+    }
+    @objc func clearLogs(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+        FileLogger.shared.clear()
+        resolve([:])
+    }
+    @objc func getLogFilePath(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+        resolve(FileLogger.shared.filePath() ?? NSNull())
+    }
 }
 
 private class PhotoDelegate: NSObject, AVCapturePhotoCaptureDelegate {

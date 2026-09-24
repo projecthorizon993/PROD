@@ -12,6 +12,7 @@ import { LowLightPanel } from './LowLightPanel';
 import { ZoomBar } from './ZoomBar';
 import { SharpnessPanel } from './SharpnessPanel';
 import { BracketPanel } from './BracketPanel';
+import { Logger } from '../utils/Logger';
 
 export function CameraScreen({ flags, onOpenChooser }: { flags: FeatureFlags; onOpenChooser: ()=>void }) {
   const ref = useRef<any>(null);
@@ -31,13 +32,17 @@ export function CameraScreen({ flags, onOpenChooser }: { flags: FeatureFlags; on
   const [showBracket, setShowBracket] = useState(false);
 
   useEffect(()=>{ (async()=>{
+    Logger.info('CameraScreen mount', 'JS', { lowLight, filter, flags });
     const perm = Platform.OS==='ios' ? PERMISSIONS.IOS.CAMERA : PERMISSIONS.ANDROID.CAMERA;
     let r = await check(perm);
     if(r!==RESULTS.GRANTED) r = await request(perm);
-    setHasPerm(r===RESULTS.GRANTED);
+    const granted = r===RESULTS.GRANTED;
+    setHasPerm(granted);
+    Logger.info(`Camera permission ${granted ? 'granted' : 'denied'}`, 'JS', { perm, result: r, isAvailable: Pro.isAvailable });
     if(Pro.isAvailable) {
       Pro.setLowLightBoost(lowLight);
       Pro.setSharpness(0.55,'balanced');
+      Pro.logMessage?.(`[JS] CameraScreen ready lowLight=${lowLight} isAvailable=${Pro.isAvailable}`).catch(()=>{});
     }
   })()},[]);
 
@@ -48,14 +53,16 @@ export function CameraScreen({ flags, onOpenChooser }: { flags: FeatureFlags; on
   const capture = async () => {
     try {
       if(Pro.isAvailable){
+        Logger.info('Photo capture requested', 'JS', { flash: 'auto' });
         const res = await Pro.capturePhoto({flash:'auto'});
         if(res.uri) setLastUri(res.uri);
+        Logger.info('Photo capture completed', 'JS', { uri: res.uri, saved: res.saved });
         return;
       }
       // fallback to camera-kit
       const data = await ref.current?.capture?.(true);
       if(data?.uri) setLastUri(data.uri);
-    } catch(e:any){ Alert.alert('Capture failed', String(e?.message??e)); }
+    } catch(e:any){ Logger.error('Photo capture failed', 'JS', { error: String(e?.message??e) }); Alert.alert('Capture failed', String(e?.message??e)); }
   };
 
   const toggleRec = async () => {

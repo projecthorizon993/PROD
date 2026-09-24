@@ -43,7 +43,7 @@ const DESCR: Record<keyof FeatureFlags, string> = {
   bracketing: 'Extreme low-light bracketing — N× high-ISO stack (effective ISO 2–4× max, 0.03 lux SID) via BracketEngine, Vision align + mean fuse, feeds LowLight ANE',
 };
 
-export function FeatureChooser({ value, onChange, onDone }: { value: FeatureFlags; onChange: (v: FeatureFlags)=>void; onDone: ()=>void }) {
+export function FeatureChooser({ value, onChange, onDone, onOpenAnalytics }: { value: FeatureFlags; onChange: (v: FeatureFlags)=>void; onDone: ()=>void; onOpenAnalytics: ()=>void }) {
   return (
     <View style={s.wrap}>
       <Text style={s.title}>ProCamera — Choose your features</Text>
@@ -62,6 +62,7 @@ export function FeatureChooser({ value, onChange, onDone }: { value: FeatureFlag
           <Text style={s.hintText}>Tip: "other project" LUTs → drop .cube files in app Documents and use Load LUT button in Grading panel. ANE model → add LowLightRawML.mlmodelc to Xcode bundle (any custom denoiser/low-light UNet) — engine auto-detects it.</Text>
         </View>
       </ScrollView>
+      <Pressable style={s.settingsAction} onPress={onOpenAnalytics}><Text style={s.settingsActionText}>Analytics & Device Logs</Text></Pressable>
       <Pressable style={s.cta} onPress={onDone}><Text style={s.ctaText}>Start Camera →</Text></Pressable>
     </View>
   );
@@ -76,6 +77,8 @@ const s = StyleSheet.create({
   desc:{color:'#999', fontSize:12, marginTop:2},
   hint:{backgroundColor:'#111', borderWidth:1, borderColor:'#333', padding:10, borderRadius:10, marginTop:8},
   hintText:{color:'#888', fontSize:11},
+  settingsAction:{backgroundColor:'#1e3a5f', padding:12, borderRadius:12, alignItems:'center', marginBottom:8, borderWidth:1, borderColor:'#2a5a9a'},
+  settingsActionText:{color:'#fff', fontWeight:'700', fontSize:14},
   cta:{backgroundColor:'#fff', padding:14, borderRadius:14, alignItems:'center', marginBottom:20, marginTop:8},
   ctaText:{color:'#000', fontWeight:'800', fontSize:16},
 });

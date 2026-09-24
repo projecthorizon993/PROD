@@ -68,7 +68,7 @@ final class ProCameraManager: NSObject, ObservableObject {
     private func observeThermal() {
         NotificationCenter.default.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { _ in
             let s = ProcessInfo.processInfo.thermalState
-            print("[ANE] thermalState=\(s.rawValue) (\(s == .critical ? "critical → ANE preview OFF" : s == .serious ? "serious → ANE throttled" : "nominal"))")
+            AppLogger.info("thermalState=\(s.rawValue) (\(s == .critical ? "critical → ANE preview OFF" : s == .serious ? "serious → ANE throttled" : "nominal"))", category: "ANE")
             if s == .critical {
                 // Keep still capture ANE but disable preview heavy work (we already do fallback for preview)
                 self.lowLightEnhancer?.isANEPreferred = false
@@ -89,7 +89,7 @@ final class ProCameraManager: NSObject, ObservableObject {
                 if granted { self.setupSession() }
             }
         default:
-            print("[ProCamera] Camera permission denied")
+            AppLogger.error("Camera permission denied", category: "ProCamera")
         }
     }
 
@@ -161,7 +161,7 @@ final class ProCameraManager: NSObject, ObservableObject {
         guard let videoDevice = device,
               let input = try? AVCaptureDeviceInput(device: videoDevice),
               session.canAddInput(input) else {
-            print("[ProCamera] Failed to create video input")
+            AppLogger.error("Failed to create video input device=\(String(describing: device?.localizedName))", category: "ProCamera")
             return
         }
         session.addInput(input)
@@ -299,7 +299,7 @@ final class ProCameraManager: NSObject, ObservableObject {
                 self.zoomFactor = clamped
                 self.updateActiveLens(for: clamped)
             }
-        } catch { print("[ProCamera] zoom error \(error)") }
+        } catch { AppLogger.error("zoom error \(error)", category: "Zoom") }
     }
     func setSharpness(intensity: Float, preset: String = "balanced") {
         zoomSharpnessEngine?.sharpness = max(0, min(1, intensity))
@@ -362,7 +362,7 @@ final class ProCameraManager: NSObject, ObservableObject {
                 device.exposureMode = .continuousAutoExposure
             }
             device.unlockForConfiguration()
-        } catch { print("[ProCamera] exposure error \(error)") }
+        } catch { AppLogger.error("exposure error \(error)", category: "ProCamera") }
     }
 
     func setExposureBias(_ bias: Float) {
@@ -551,9 +551,9 @@ extension ProCameraManager: AVCaptureFileOutputRecordingDelegate {
             self.isRecording = false
             if error == nil {
                 self.recordedVideoURL = outputFileURL
-                // Save to photo library is handled by bridge / UI
+                AppLogger.info("recording finished \(outputFileURL)", category: "ProCamera")
             } else {
-                print("[ProCamera] recording error \(String(describing: error))")
+                AppLogger.error("recording error \(String(describing: error))", category: "ProCamera")
             }
         }
     }
