@@ -3,6 +3,9 @@ import AVFoundation
 import CoreImage
 import Vision
 import Metal
+import CoreVideo
+import CoreMedia
+import ImageIO
 
 final class BracketEngine {
     enum AlignMode: String { case auto, tripod, handheld }

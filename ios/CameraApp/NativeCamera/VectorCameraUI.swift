@@ -30,8 +30,8 @@ struct VectorCameraView: View {
                     isNight = manager.lowLightBoostEnabled
                     isBracket = manager.bracketEnabled
                 }
-                .onChange(of: isNight) { _, v in manager.lowLightBoostEnabled = v }
-                .onChange(of: isBracket) { _, v in
+                .onChange(of: isNight) { v in manager.lowLightBoostEnabled = v }
+                .onChange(of: isBracket) { v in
                     manager.bracketEnabled = v
                     if v && manager.bracketEngine == nil, let br = BracketEngine(device: MTLCreateSystemDefaultDevice()) { manager.bracketEngine = br }
                 }
@@ -109,7 +109,7 @@ struct VectorCameraView: View {
                 GalleryThumbnail(manager: manager)
                 Spacer()
                 ModeSelector(mode: $mode)
-                    .onChange(of: mode) { _, _ in /* photo/video switch is UI-only; capture uses manager.capturePhoto vs startRecording */ }
+                    .onChange(of: mode) { _ in /* photo/video switch is UI-only; capture uses manager.capturePhoto vs startRecording */ }
                 Spacer()
                 ShutterButton(isRecording: Binding(get: { manager.isRecording }, set: { _ in }), mode: mode, manager: manager)
             }
@@ -323,7 +323,7 @@ struct ZoomPanel: View {
                 Text(String(format: "%.1f× %@", zoom, manager?.activeLens ?? "wide"))
                     .font(.system(size: 38, weight: .bold, design: .rounded))
                 Slider(value: $zoom, in: 0.5...8, step: 0.1)
-                    .onChange(of: zoom) { _, v in manager?.setZoom(CGFloat(v)) }
+                    .onChange(of: zoom) { v in manager?.setZoom(CGFloat(v)) }
                 HStack(spacing: 9) {
                     ForEach(presets, id: \.self) { value in
                         Button {
@@ -337,8 +337,8 @@ struct ZoomPanel: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Toggle("Super Resolution", isOn: $superResolution).onChange(of: superResolution) { _, v in manager?.setSuperResolution(enabled: v) }
-                Toggle("Seamless Lens Switching", isOn: $seamless).onChange(of: seamless) { _, v in manager?.setSeamlessEnabled(v) }
+                Toggle("Super Resolution", isOn: $superResolution).onChange(of: superResolution) { v in manager?.setSuperResolution(enabled: v) }
+                Toggle("Seamless Lens Switching", isOn: $seamless).onChange(of: seamless) { v in manager?.setSeamlessEnabled(v) }
                 StatusCard(title: (zoom <= 2 ? "OPTICAL" : "DIGITAL + ANE SR"), detail: zoom <= 2 ? "Using available optical lens" : "Super-resolution processing enabled")
             }
             .padding(22)
@@ -356,11 +356,11 @@ struct ManualPanel: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 18) {
-                CameraSlider(title: "ISO", value: $iso, range: 32...3200, valueText: "\(Int(iso))").onChange(of: iso) { _, v in manager?.setManualExposure(iso: Float(v), shutter: nil) }
-                CameraSlider(title: "Shutter", value: $shutter, range: 0.5...33, valueText: String(format: "%.1f ms", shutter)).onChange(of: shutter) { _, v in
+                CameraSlider(title: "ISO", value: $iso, range: 32...3200, valueText: "\(Int(iso))").onChange(of: iso) { v in manager?.setManualExposure(iso: Float(v), shutter: nil) }
+                CameraSlider(title: "Shutter", value: $shutter, range: 0.5...33, valueText: String(format: "%.1f ms", shutter)).onChange(of: shutter) { v in
                     let cm = CMTimeMakeWithSeconds(v/1000, preferredTimescale: 1_000_000); manager?.setManualExposure(iso: Float(iso), shutter: cm)
                 }
-                CameraSlider(title: "Focus", value: $focus, range: 0...1, valueText: String(format: "%.2f", focus)).onChange(of: focus) { _, v in manager?.setManualFocus(lensPosition: Float(v)) }
+                CameraSlider(title: "Focus", value: $focus, range: 0...1, valueText: String(format: "%.2f", focus)).onChange(of: focus) { v in manager?.setManualFocus(lensPosition: Float(v)) }
                 CameraSlider(title: "WB", value: $temperature, range: 0...1, valueText: String(format: "%.2f", temperature))
             }
             .padding(22)
@@ -396,7 +396,7 @@ struct GradingPanel: View {
         }
     }
     private func gradingSlider(_ title: String, _ value: Binding<Double>, _ range: ClosedRange<Double>, _ onChange: @escaping (Double)->Void) -> some View {
-        CameraSlider(title: title, value: value, range: range, valueText: String(format: "%.2f", value.wrappedValue)).onChange(of: value.wrappedValue) { _, v in onChange(v) }
+        CameraSlider(title: title, value: value, range: range, valueText: String(format: "%.2f", value.wrappedValue)).onChange(of: value.wrappedValue) { v in onChange(v) }
     }
 }
 
@@ -435,7 +435,7 @@ struct LowLightPanel: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Target Metric").font(.headline)
                 Picker("Target", selection: $target) { ForEach(targets, id: \.self) { Text($0) } }.pickerStyle(.segmented)
-                    .onChange(of: target) { _, v in manager?.lowLightEnhancer?.targetMetric = v.lowercased() == "psnr" ? .psnr : v.lowercased() == "perceptual" ? .perceptual : v.lowercased() == "natural" ? .natural : .balanced }
+                    .onChange(of: target) { v in manager?.lowLightEnhancer?.targetMetric = v.lowercased() == "psnr" ? .psnr : v.lowercased() == "perceptual" ? .perceptual : v.lowercased() == "natural" ? .natural : .balanced }
                 Text("Strategy").font(.headline)
                 ForEach(strategies, id: \.self) { item in
                     Button { strategy = item; if let s = LowLightEnhancer.Strategy(rawValue: item.replacingOccurrences(of: " ", with: "")) { manager?.lowLightEnhancer?.strategy = s } } label: {
@@ -463,10 +463,10 @@ struct BracketPanel: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Toggle("Extreme Low Light Bracketing", isOn: $enabled).onChange(of: enabled) { _, v in manager?.bracketEnabled = v; if v && manager?.bracketEngine == nil, let br = BracketEngine(device: MTLCreateSystemDefaultDevice()) { manager?.bracketEngine = br } }
-                CameraSlider(title: "N (shots)", value: $shots, range: 3...7, valueText: "\(Int(shots))").onChange(of: shots) { _, v in manager?.bracketEngine?.count = Int(v) }
+                Toggle("Extreme Low Light Bracketing", isOn: $enabled).onChange(of: enabled) { v in manager?.bracketEnabled = v; if v && manager?.bracketEngine == nil, let br = BracketEngine(device: MTLCreateSystemDefaultDevice()) { manager?.bracketEngine = br } }
+                CameraSlider(title: "N (shots)", value: $shots, range: 3...7, valueText: "\(Int(shots))").onChange(of: shots) { v in manager?.bracketEngine?.count = Int(v) }
                 HStack { Text("+\(String(format: "%.1f", dbGain)) dB"); Spacer(); Text("10 · log₁₀(N)") }.font(.caption).foregroundStyle(.secondary)
-                CameraSlider(title: "ISO", value: $iso, range: 3200...12800, valueText: "\(Int(iso))").onChange(of: iso) { _, v in manager?.bracketEngine?.targetISO = Float(v) }
+                CameraSlider(title: "ISO", value: $iso, range: 3200...12800, valueText: "\(Int(iso))").onChange(of: iso) { v in manager?.bracketEngine?.targetISO = Float(v) }
                 StatusCard(title: "EFFECTIVE ISO", detail: "ISO / √N  •  burst <600 ms  •  Vision align  •  linear mean  •  LOE")
             }
             .padding(22)
@@ -483,7 +483,7 @@ struct SharpnessPanel: View {
     let presets = ["Auto","PSNR","Perceptual","Natural","Balanced"]
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            CameraSlider(title: "Intensity", value: $intensity, range: 0...1, valueText: String(format: "%.2f", intensity)).onChange(of: intensity) { _, v in manager?.setSharpness(intensity: Float(v), preset: preset.lowercased()) }
+            CameraSlider(title: "Intensity", value: $intensity, range: 0...1, valueText: String(format: "%.2f", intensity)).onChange(of: intensity) { v in manager?.setSharpness(intensity: Float(v), preset: preset.lowercased()) }
             Text("Preset").font(.headline)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
