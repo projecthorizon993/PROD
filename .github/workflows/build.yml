@@ -1,8 +1,8 @@
-name: Build (iOS ANE + Android CameraX)
+name: Build (Android CameraX lean)
 
 on:
   push:
-    branches: [main, ios-optimized, android-lean]
+    branches: [main, android-lean, ios-optimized]
   pull_request:
   workflow_dispatch:
 
@@ -15,7 +15,6 @@ jobs:
         with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
       - run: |
           npm ci
-          npx react-native bundle --platform ios --dev false --entry-file index.js --bundle-output /tmp/ios.bundle --assets-dest /tmp
           npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output /tmp/android.bundle --assets-dest /tmp
 
   android:
@@ -46,95 +45,3 @@ jobs:
         with:
           name: android-aab
           path: android/app/build/outputs/bundle/release/*.aab
-
-  ios-compile:
-    runs-on: macos-14
-    needs: js-bundle-check
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
-      - uses: ruby/setup-ruby@v1
-        with: { ruby-version: '3.2', bundler-cache: true, working-directory: ios }
-      - name: Select Xcode 15.4
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer && xcodebuild -version
-      - name: Install JS deps
-        run: npm ci
-      - name: Pod install (ProCamera 16.0, ANE)
-        working-directory: ios
-        run: pod install --repo-update
-      - name: Build unsigned IPA (no signing, you sign later)
-        run: |
-          xcodebuild -workspace ios/CameraApp.xcworkspace \
-            -scheme CameraApp -configuration Release \
-            -sdk iphoneos \
-            -destination generic/platform=iOS \
-            build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee /tmp/xcodebuild.log; test ${PIPESTATUS[0]} -eq 0
-      - name: Show xcodebuild log on failure
-        if: failure()
-        run: cat /tmp/xcodebuild.log | tail -n 600
-      - name: Package unsigned app
-        if: success()
-        run: |
-          mkdir -p build/unsigned
-          # Find built .app (simulator build produced device .app now)
-          find ~/Library/Developer/Xcode/DerivedData -name "CameraApp.app" -type d | head -n 1 | xargs -I {} cp -R {} build/unsigned/ 2>/dev/null || true
-          # Also create IPA folder for archive-less unsigned build
-          ls -R build 2>/dev/null | head -n 30
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ios-unsigned-app
-          path: build/unsigned/
-          if-no-files-found: warn
-
-  ios-release:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
-    runs-on: macos-14
-    needs: ios-compile
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
-      - uses: ruby/setup-ruby@v1
-        with: { ruby-version: '3.2', bundler-cache: true, working-directory: ios }
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
-      - name: Install deps + pods
-        run: |
-          npm ci
-          cd ios && pod install --repo-update
-      - name: Import signing certs
-        uses: apple-actions/import-codesigning-certs@v3
-        with:
-          p12-file-base64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
-          p12-password: ${{ secrets.APPLE_CERT_PASSWORD }}
-      - name: Download provisioning profiles
-        uses: apple-actions/download-provisioning-profiles@v3
-        with:
-          bundle-id: com.camerapp
-          issuer-id: ${{ secrets.APPLE_API_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
-      - name: Archive IPA
-        run: |
-          xcodebuild -workspace ios/CameraApp.xcworkspace \
-            -scheme CameraApp -configuration Release \
-            -archivePath build/CameraApp.xcarchive archive \
-            CODE_SIGN_STYLE=manual 2>&1 | tee /tmp/archive.log; test ${PIPESTATUS[0]} -eq 0
-          xcodebuild -exportArchive -archivePath build/CameraApp.xcarchive \
-            -exportPath build/ipa -exportOptionsPlist ios/ExportOptions.plist 2>&1 | tee /tmp/export.log; test ${PIPESTATUS[0]} -eq 0
-      - name: Show archive log on failure
-        if: failure()
-        run: cat /tmp/archive.log | tail -n 300; cat /tmp/export.log | tail -n 300
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: build/ipa/*.ipa
-      - name: Upload to TestFlight (optional)
-        if: env.UPLOAD_TF == 'true'
-        env:
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
-          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
-        run: |
-          xcrun altool --upload-app -f build/ipa/CameraApp.ipa --apiKey $APPLE_API_KEY_ID --apiIssuer $APPLE_API_ISSUER_ID

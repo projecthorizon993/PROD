@@ -37,9 +37,10 @@ npx react-native bundle --platform android --dev false --entry-file index.js --b
 ```
 
 ## Camera on Android
-- `src/native/ProCamera.ts` now returns `fallback({})` for all `setGrading/setFilter/setLowLight` etc until you add `ProCameraModule.kt`. `CameraScreen` falls back to `Camera ref.capture()` (Kit) — works on Android 8+.
-- Permissions in `AndroidManifest.xml` already: `CAMERA`, `RECORD_AUDIO`, `READ/WRITE_EXTERNAL_STORAGE`.
-- To enable full pro features on Android: create `android/app/src/main/java/com/camerapp/ProCameraModule.kt` (CameraX, TFLite for low-light, GPU for LUT), expose via `NativeModules.ProCameraAndroid` → `isAvailable` flips to true and all RN calls route natively.
+- `src/native/ProCamera.ts` → `isAvailable = Platform.OS==='android' && NativeModules.ProCameraAndroid`. Native stub `ProCameraModule.kt` + `ProCameraPackage.kt` already wired in `MainApplication.kt` — all RN calls route natively (currently stubs). `CameraScreen` falls back to `Camera ref.capture()` (Kit) when native returns empty — works on Android 8+.
+- Permissions in `AndroidManifest.xml` already: `CAMERA`, `RECORD_AUDIO`, `READ_MEDIA_IMAGES/VIDEO`, `READ/WRITE_EXTERNAL_STORAGE`, `hardware.camera`.
+- Namespace fixed: `android/app/build.gradle` `namespace com.camerapp` + `applicationId com.camerapp` ↔ `MainActivity.kt`/`MainApplication.kt` `package com.camerapp`.
+- To enable full pro features: extend `ProCameraModule.kt` (CameraX, TFLite for low-light, GPU for LUT) — add `org.tensorflow:tensorflow-lite-gpu` to `android/app/build.gradle`.
 
 ## Features retained (all Android-compatible)
 - Photo/video, switch front/back, pinch zoom, manual ISO/shutter/focus/WB (Kit), filters, color grading (GPU), low-light GPU fallback, gallery, zoom SR (GPU), sharpness, bracketing UI (JS fuse) — previously iOS-ANE now GPU stub.
