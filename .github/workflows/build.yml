@@ -12,9 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: CameraApp/package-lock.json }
-      - working-directory: CameraApp
-        run: |
+        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
+      - run: |
           npm ci
           npx react-native bundle --platform ios --dev false --entry-file index.js --bundle-output /tmp/ios.bundle --assets-dest /tmp
           npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output /tmp/android.bundle --assets-dest /tmp
@@ -25,51 +24,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: CameraApp/package-lock.json }
+        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17, cache: gradle }
       - name: Install JS deps
-        working-directory: CameraApp
         run: npm ci
       - name: Build APK (CameraKit)
-        working-directory: CameraApp/android
+        working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --warning-mode all
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: CameraApp/android/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
       - name: Build AAB (Play Store)
-        working-directory: CameraApp/android
+        working-directory: android
         run: ./gradlew bundleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: android-aab
-          path: CameraApp/android/app/build/outputs/bundle/release/*.aab
+          path: android/app/build/outputs/bundle/release/*.aab
 
   ios-compile:
-    # No signing — just verifies that Swift + pods + ANE (16.0, ProCamera pod) compile on macOS.
-    # Use ios-release job below for real device IPA.
     runs-on: macos-14
     needs: js-bundle-check
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: CameraApp/package-lock.json }
+        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
       - uses: ruby/setup-ruby@v1
-        with: { ruby-version: '3.2', bundler-cache: true, working-directory: CameraApp/ios }
+        with: { ruby-version: '3.2', bundler-cache: true, working-directory: ios }
       - name: Select Xcode 15.4
         run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer && xcodebuild -version
       - name: Install JS deps
-        working-directory: CameraApp
         run: npm ci
       - name: Pod install (ProCamera 16.0, ANE)
-        working-directory: CameraApp/ios
+        working-directory: ios
         run: pod install --repo-update
       - name: Build for simulator (no signing)
-        working-directory: CameraApp
         run: |
           xcodebuild -workspace ios/CameraApp.xcworkspace \
             -scheme CameraApp -configuration Release \
@@ -77,20 +71,18 @@ jobs:
             build CODE_SIGNING_ALLOWED=NO | xcpretty
 
   ios-release:
-    # Real-device IPA — requires Apple secrets (see README). Runs only on manual dispatch or tag.
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-14
     needs: ios-compile
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: CameraApp/package-lock.json }
+        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
       - uses: ruby/setup-ruby@v1
-        with: { ruby-version: '3.2', bundler-cache: true, working-directory: CameraApp/ios }
+        with: { ruby-version: '3.2', bundler-cache: true, working-directory: ios }
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
       - name: Install deps + pods
-        working-directory: CameraApp
         run: |
           npm ci
           cd ios && pod install --repo-update
@@ -107,7 +99,6 @@ jobs:
           api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
           api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
       - name: Archive IPA
-        working-directory: CameraApp
         run: |
           xcodebuild -workspace ios/CameraApp.xcworkspace \
             -scheme CameraApp -configuration Release \
@@ -118,7 +109,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
-          path: CameraApp/build/ipa/*.ipa
+          path: build/ipa/*.ipa
       - name: Upload to TestFlight (optional)
         if: env.UPLOAD_TF == 'true'
         env:
@@ -126,4 +117,4 @@ jobs:
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
           APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
         run: |
-          xcrun altool --upload-app -f CameraApp/build/ipa/CameraApp.ipa --apiKey $APPLE_API_KEY_ID --apiIssuer $APPLE_API_ISSUER_ID
+          xcrun altool --upload-app -f build/ipa/CameraApp.ipa --apiKey $APPLE_API_KEY_ID --apiIssuer $APPLE_API_ISSUER_ID
