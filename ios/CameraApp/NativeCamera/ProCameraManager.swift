@@ -2,6 +2,8 @@ import AVFoundation
 import UIKit
 import Combine
 import CoreImage
+import CoreMedia
+import CoreVideo
 
 // MARK: - ProCameraManager
 // Central AVFoundation stack. Handles session, photo/video, manual controls, and delegates frame processing

@@ -5,6 +5,9 @@ import Vision
 import Metal
 import MetalPerformanceShaders
 import Accelerate
+import CoreMedia
+import CoreVideo
+import ImageIO
 
 // MARK: - LowLightEnhancer (Metric-Optimized)
 // Optimized against https://github.com/zhihongz/awesome-low-light-image-enhancement#metrics

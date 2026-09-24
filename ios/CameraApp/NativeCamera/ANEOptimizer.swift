@@ -2,7 +2,8 @@ import Foundation
 import CoreML
 import Vision
 import Metal
-import os.log
+import CoreVideo
+import os
 
 enum ANEOptimizer {
     static let log = OSLog(subsystem: "com.procamer.ane", category: "ANE")
