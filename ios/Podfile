@@ -23,7 +23,6 @@ target 'CameraApp' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  pod 'react-native-camera-kit', :path => '../node_modules/react-native-camera-kit'
   pod 'ProCamera', :path => './CameraApp/NativeCamera'
 
   target 'CameraAppTests' do
